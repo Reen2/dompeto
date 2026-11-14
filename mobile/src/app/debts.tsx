@@ -179,10 +179,10 @@ export default function DebtsScreen() {
                   <ProgressBar value={ratio} height={5} color={tab === 'payable' ? c.expense : c.income} />
                   <Row between style={{ marginTop: 6 }}>
                     <Txt variant="caption" color={c.textFaint}>
-                      Dibayar {formatMoney(paid, { compact: true })}
+                      Dibayar {formatMoney(paid, { compact: true, masked: settings.hideBalances })}
                     </Txt>
                     <Txt variant="caption" color={c.textFaint}>
-                      Dari {formatMoney(debt.principal, { compact: true })}
+                      Dari {formatMoney(debt.principal, { compact: true, masked: settings.hideBalances })}
                     </Txt>
                   </Row>
                 </Card>
@@ -377,12 +377,15 @@ function DebtSheet({
 
 function PaySheet({ debt, onClose }: { debt: Debt | null; onClose: () => void }) {
   const c = useTheme();
+  const { settings } = useSettings();
   const wallets = useQuery(() => listWallets(), []);
   const [amount, setAmount] = useState(debt ? String(debt.remaining) : '');
-  const [walletChoice, setWalletId] = useState<string | null>(null);
+  const [walletChoice, setWalletId] = useState<string | null | undefined>(undefined);
   const [picker, setPicker] = useState(false);
 
-  const walletId = walletChoice ?? wallets.data?.[0]?.id ?? null;
+  // `undefined` means "not chosen yet" so the first wallet can be the default
+  // while an explicit `null` still means "no wallet".
+  const walletId = walletChoice === undefined ? (wallets.data?.[0]?.id ?? null) : walletChoice;
   const value = parseAmountInput(amount);
   const wallet = (wallets.data ?? []).find((item) => item.id === walletId);
 
@@ -475,7 +478,7 @@ function PaySheet({ debt, onClose }: { debt: Debt | null; onClose: () => void })
         options={(wallets.data ?? []).map((item) => ({
           value: item.id,
           label: item.name,
-          subtitle: formatMoney(item.balance),
+          subtitle: formatMoney(item.balance, { masked: settings.hideBalances }),
           icon: item.icon,
           color: item.color,
         }))}

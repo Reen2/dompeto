@@ -176,8 +176,8 @@ export default function BudgetsScreen() {
                     </Txt>
                     <Txt variant="caption" color={over ? c.expense : c.textMuted}>
                       {over
-                        ? `Lewat ${formatMoney(budget.spent - budget.amount, { compact: true })}`
-                        : `${formatMoney(perDay, { compact: true })}/hari · ${daysLeft} hari lagi`}
+                        ? `Lewat ${formatMoney(budget.spent - budget.amount, { compact: true, masked: settings.hideBalances })}`
+                        : `${formatMoney(perDay, { compact: true, masked: settings.hideBalances })}/hari · ${daysLeft} hari lagi`}
                     </Txt>
                   </Row>
                 </Card>

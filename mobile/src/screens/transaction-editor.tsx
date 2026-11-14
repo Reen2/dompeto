@@ -28,6 +28,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatDateID, relativeDateLabel, todayISO } from '@/lib/dates';
 import { formatAmount, formatMoney, parseAmountInput } from '@/lib/money';
 import { radius } from '@/lib/theme';
+import { useSettings } from '@/store/settings';
 
 type Mode = 'new' | 'edit';
 
@@ -55,6 +56,7 @@ export function TransactionEditor({
   initialPayee?: string;
 }) {
   const c = useTheme();
+  const { settings } = useSettings();
   const insets = useSafeAreaInsets();
 
   const [type, setType] = useState<TxnType>(initialType);
@@ -344,11 +346,10 @@ export function TransactionEditor({
             />
             <Divider inset={52} />
             <FieldRow
-              icon="text.alignleft"
-              label="Catatan"
-              value={note || 'Tambah catatan'}
-              muted={!note}
-              onPress={() => setShowMore(true)}
+              icon="slider.horizontal.3"
+              label="Opsi lainnya"
+              value={showMore ? 'Tutup' : 'Tag, biaya, hapus'}
+              onPress={() => setShowMore((prev) => !prev)}
             />
           </View>
 
@@ -374,15 +375,6 @@ export function TransactionEditor({
           </View>
 
           {/* more */}
-          <Pressable onPress={() => setShowMore((prev) => !prev)} hitSlop={6}>
-            <Row gap={6}>
-              <Icon sf={showMore ? 'chevron.up' : 'chevron.down'} size={12} color={c.textMuted} />
-              <Txt variant="caption" color={c.textMuted}>
-                Opsi lainnya
-              </Txt>
-            </Row>
-          </Pressable>
-
           {showMore ? (
             <Stack gap={12}>
               {type === 'transfer' ? (
@@ -453,7 +445,7 @@ export function TransactionEditor({
         visible={walletSheet}
         onClose={() => setWalletSheet(false)}
         title="Pilih dompet"
-        options={walletList.map(walletOption)}
+        options={walletList.map((item) => walletOption(item, settings.hideBalances))}
         value={walletId}
         onSelect={(value) => {
           setWalletId(value);
@@ -464,7 +456,7 @@ export function TransactionEditor({
         visible={toWalletSheet}
         onClose={() => setToWalletSheet(false)}
         title="Dompet tujuan"
-        options={walletList.filter((w) => w.id !== walletId).map(walletOption)}
+        options={walletList.filter((w) => w.id !== walletId).map((item) => walletOption(item, settings.hideBalances))}
         value={toWalletId}
         onSelect={(value) => {
           setToWalletId(value);
@@ -511,11 +503,11 @@ export function TransactionEditor({
   );
 }
 
-function walletOption(wallet: WalletWithBalance) {
+function walletOption(wallet: WalletWithBalance, masked: boolean) {
   return {
     value: wallet.id,
     label: wallet.name,
-    subtitle: formatMoney(wallet.balance),
+    subtitle: formatMoney(wallet.balance, { masked }),
     icon: wallet.icon,
     color: wallet.color,
   };

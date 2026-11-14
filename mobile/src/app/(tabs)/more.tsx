@@ -76,9 +76,21 @@ export default function MoreScreen() {
       </Card>
 
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        <MiniStat label="Ditabung" value={formatMoney(saved, { compact: true })} color={c.income} />
-        <MiniStat label="Utang" value={formatMoney(owed, { compact: true })} color={c.expense} />
-        <MiniStat label="Piutang" value={formatMoney(receivable, { compact: true })} color={c.info} />
+        <MiniStat
+          label="Ditabung"
+          value={formatMoney(saved, { compact: true, masked: settings.hideBalances })}
+          color={c.income}
+        />
+        <MiniStat
+          label="Utang"
+          value={formatMoney(owed, { compact: true, masked: settings.hideBalances })}
+          color={c.expense}
+        />
+        <MiniStat
+          label="Piutang"
+          value={formatMoney(receivable, { compact: true, masked: settings.hideBalances })}
+          color={c.info}
+        />
       </View>
 
       <SectionHeader title="Kelola" />

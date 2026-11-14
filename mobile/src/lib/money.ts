@@ -12,6 +12,15 @@ export function parseAmountInput(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Same as `parseAmountInput`, but keeps a single leading minus so a credit
+ * card can start with an existing balance owed.
+ */
+export function parseSignedAmountInput(raw: string): number {
+  const value = parseAmountInput(raw);
+  return raw.trim().startsWith('-') ? -value : value;
+}
+
 /** 1234567 -> "1.234.567" */
 export function formatAmount(n: number, decimals = 0): string {
   const abs = Math.abs(Math.trunc(n));

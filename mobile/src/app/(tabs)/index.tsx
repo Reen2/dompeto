@@ -333,7 +333,11 @@ export default function HomeScreen() {
                           {bill.name}
                         </Txt>
                         <Txt variant="caption" color={bill.next_run <= today ? c.expense : c.textMuted}>
-                          {bill.next_run <= today ? 'Jatuh tempo hari ini' : `Jatuh tempo ${bill.next_run.slice(8, 10)}/${bill.next_run.slice(5, 7)}`}
+                          {bill.next_run < today
+                            ? `Terlambat ${bill.next_run.slice(8, 10)}/${bill.next_run.slice(5, 7)}`
+                            : bill.next_run === today
+                              ? 'Jatuh tempo hari ini'
+                              : `Jatuh tempo ${bill.next_run.slice(8, 10)}/${bill.next_run.slice(5, 7)}`}
                         </Txt>
                       </View>
                     </Row>
@@ -366,7 +370,7 @@ export default function HomeScreen() {
               </Row>
             </Row>
             <Txt variant="caption" color={c.textFaint}>
-              30 hari: {formatMoney(last30.data?.expense ?? 0, { compact: true })}
+              30 hari: {formatMoney(last30.data?.expense ?? 0, { compact: true, masked: settings.hideBalances })}
             </Txt>
           </Row>
           <GroupedBars data={monthBars} height={120} />

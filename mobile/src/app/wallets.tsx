@@ -19,9 +19,23 @@ import { deleteWallet, listWallets, saveWallet, setWalletArchived } from '@/db/q
 import { WALLET_TYPES } from '@/db/schema';
 import type { WalletType, WalletWithBalance } from '@/db/types';
 import { useTheme } from '@/hooks/use-theme';
-import { formatAmount, formatMoney, parseAmountInput } from '@/lib/money';
+import { formatAmount, formatMoney, parseAmountInput, parseSignedAmountInput } from '@/lib/money';
+
 import { categoryPalette, radius } from '@/lib/theme';
 import { useSettings } from '@/store/settings';
+
+/** Keeps the leading minus while formatting digits with thousand separators. */
+function cleanSignedInput(text: string): string {
+  const negative = text.trim().startsWith('-');
+  const digits = text.replace(/[^\d]/g, '').slice(0, 13);
+  if (!digits) return negative ? '-' : '';
+  return `${negative ? '-' : ''}${digits}`;
+}
+
+function formatSignedInput(raw: string): string {
+  const value = parseSignedAmountInput(raw);
+  return `${value < 0 ? '-' : ''}${formatAmount(value)}`;
+}
 
 export default function WalletsScreen() {
   const c = useTheme();
@@ -117,10 +131,14 @@ export default function WalletsScreen() {
                       <View style={{ height: 1, backgroundColor: c.border, marginVertical: 10 }} />
                       <Row between>
                         <Txt variant="caption" color={c.textMuted}>
-                          Limit {formatMoney(wallet.credit_limit, { compact: true })}
+                          Limit {formatMoney(wallet.credit_limit, { compact: true, masked: settings.hideBalances })}
                         </Txt>
                         <Txt variant="caption" color={c.textMuted}>
-                          Sisa {formatMoney(Math.max(0, wallet.credit_limit + wallet.balance), { compact: true })}
+                          Sisa{' '}
+                          {formatMoney(Math.max(0, wallet.credit_limit + wallet.balance), {
+                            compact: true,
+                            masked: settings.hideBalances,
+                          })}
                         </Txt>
                       </Row>
                     </>
@@ -188,8 +206,8 @@ function WalletSheet({
       type,
       icon: meta.icon,
       color,
-      opening_balance: parseAmountInput(opening),
-      credit_limit: type === 'credit_card' ? parseAmountInput(limit) : null,
+      opening_balance: parseSignedAmountInput(opening),
+      credit_limit: type === 'credit_card' ? parseSignedAmountInput(limit) : null,
       include_in_total: includeInTotal,
     });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -318,8 +336,8 @@ function WalletSheet({
               Rp
             </Txt>
             <TextInput
-              value={opening ? formatAmount(parseAmountInput(opening)) : ''}
-              onChangeText={(text) => setOpening(text.replace(/[^\d-]/g, '').slice(0, 13))}
+              value={opening ? formatSignedInput(opening) : ''}
+              onChangeText={(text) => setOpening(cleanSignedInput(text))}
               placeholder="0"
               keyboardType="numbers-and-punctuation"
               placeholderTextColor={c.textFaint}
@@ -334,7 +352,9 @@ function WalletSheet({
             />
           </Row>
           <Txt variant="caption" color={c.textFaint} style={{ marginTop: 4 }}>
-            Saldo saat dompet mulai dipakai.
+            {type === 'credit_card'
+              ? 'Isi dengan minus (mis. -500.000) bila ada tagihan berjalan.'
+              : 'Saldo saat dompet mulai dipakai.'}
           </Txt>
         </View>
 

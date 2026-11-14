@@ -1072,7 +1072,9 @@ export async function payDebt(
   note?: string,
 ) {
   const db = await getDb();
-  const remaining = Math.max(0, debt.remaining - amount);
+  const applied = Math.max(0, Math.min(amount, debt.remaining));
+  if (applied <= 0) return;
+  const remaining = debt.remaining - applied;
   const ts = nowISO();
 
   let txnId: string | null = null;
@@ -1084,7 +1086,7 @@ export async function payDebt(
       txnId,
       debt.type === 'payable' ? 'expense' : 'income',
       walletId,
-      amount,
+      applied,
       todayISO(),
       debt.counterparty,
       note ?? (debt.type === 'payable' ? 'Bayar utang' : 'Terima piutang'),
@@ -1104,7 +1106,7 @@ export async function payDebt(
     'INSERT INTO debt_payments (id, debt_id, amount, paid_at, transaction_id, note) VALUES (?, ?, ?, ?, ?, ?)',
     uid(),
     debt.id,
-    amount,
+    applied,
     todayISO(),
     txnId,
     note ?? null,

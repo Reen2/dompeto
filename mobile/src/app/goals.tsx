@@ -146,8 +146,8 @@ export default function GoalsScreen() {
                       {done
                         ? 'Selamat, tercapai!'
                         : perMonth
-                          ? `Sisihkan ${formatMoney(perMonth, { compact: true })}/bulan`
-                          : `Kurang ${formatMoney(remaining, { compact: true })}`}
+                          ? `Sisihkan ${formatMoney(perMonth, { compact: true, masked: settings.hideBalances })}/bulan`
+                          : `Kurang ${formatMoney(remaining, { compact: true, masked: settings.hideBalances })}`}
                     </Txt>
                   </Row>
                 </Card>
@@ -388,6 +388,7 @@ function GoalSheet({
 
 function ContributeSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }) {
   const c = useTheme();
+  const { settings } = useSettings();
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const value = parseAmountInput(amount);
@@ -469,7 +470,7 @@ function ContributeSheet({ goal, onClose }: { goal: Goal | null; onClose: () => 
       />
 
       <Txt variant="caption" color={c.textFaint}>
-        Sisa menuju target: {formatMoney(remaining)}
+        Sisa menuju target: {formatMoney(remaining, { masked: settings.hideBalances })}
       </Txt>
 
       <Button label="Tambah dana" size="lg" disabled={value <= 0} onPress={submit} />
