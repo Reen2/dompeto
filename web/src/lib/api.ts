@@ -33,7 +33,7 @@ export function isOnline() {
   return !!token;
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE || 'https://main.dompet-26l.pages.dev/api').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 
 async function req<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

@@ -17,6 +17,8 @@ const quickActions = [
 export default function Home() {
   const { settings } = useSettings();
   const wallets = useLiveQuery(() => listWallets(), []);
+  const avatar = settings.profile_avatar;
+  const initial = (settings.name || 'Dompet').trim().charAt(0).toUpperCase();
   const recent = useLiveQuery(() => listTransactions({ limit: 6 }), []);
   const todayTxns = useLiveQuery(() => listTransactions({ from: todayISO(), to: todayISO(), limit: 1 }), []);
   const monthStart = startOfMonth(todayISO());
@@ -39,12 +41,23 @@ export default function Home() {
           <h1 className="txt-h1" style={{ marginTop: 2 }}>{settings.name || 'Dompet'}</h1>
         </div>
         <Link to="/settings" style={{ textDecoration: 'none' }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 20,
-            background: 'var(--accent-soft)', color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, fontSize: 15,
-          }}>D</div>
+          {avatar ? (
+            <img
+              src={avatar}
+              alt="Foto profil"
+              style={{
+                width: 40, height: 40, borderRadius: 20,
+                objectFit: 'cover', border: '2px solid var(--border)',
+              }}
+            />
+          ) : (
+            <div style={{
+              width: 40, height: 40, borderRadius: 20,
+              background: 'var(--accent-soft)', color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 700, fontSize: 15,
+            }}>{initial}</div>
+          )}
         </Link>
       </div>
 
