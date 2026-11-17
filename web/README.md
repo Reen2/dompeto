@@ -1,32 +1,62 @@
-# React + TypeScript + Vite
+# Cloudflare Dompet Setup
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This project deploys to Cloudflare Pages with serverless functions and Neon PostgreSQL.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Build & Deploy
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=dompet --force
+```
+
+## Environment Variables
+
+Set secrets for the Pages project "dompet" (production):
+
+```bash
+wrangler pages secret put DATABASE_URL --project-name=dompet
+wrangler pages secret put JWT_SECRET --project-name=dompet
+```
+
+## API Routes
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/sync`
+- `PUT /api/sync`
+
+## Database Schema
+
+Neon has users and snapshots tables:
+
+- users (id, email, password_hash, name, created_at)
+- snapshots (user_id, data (JSONB), updated_at)
+
+## Features
+
+- Login/signup via Neon Auth
+- Full snapshot sync from Dexie to Neon
+- Profile avatar upload
+- Offline-first architecture
+- Cloudflare Pages Functions
+
+## Troubleshooting
+
+If API calls return 500 errors, check that:
+1. DATABASE_URL and JWT_SECRET secrets are set correctly in Cloudflare Pages dashboard
+2. Your local secrets match the remote secrets
+3. The functions are deployed correctly
+
+## Quick Start
+
+1. Set secrets
+2. Build
+3. Deploy
+4. Test login and registration

@@ -9,6 +9,7 @@ export type Settings = {
   name: string;
   dailyReminder: boolean;
   onboardingDone: boolean;
+  profile_avatar: string;
 };
 
 const DEFAULTS: Settings = {
@@ -17,6 +18,7 @@ const DEFAULTS: Settings = {
   name: '',
   dailyReminder: false,
   onboardingDone: false,
+  profile_avatar: '',
 };
 
 type Ctx = {
@@ -42,6 +44,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         name: map.name ?? DEFAULTS.name,
         dailyReminder: map.dailyReminder === 'true',
         onboardingDone: map.onboardingDone === 'true',
+        profile_avatar: map.profile_avatar ?? DEFAULTS.profile_avatar,
       });
       setReady(true);
     })();
@@ -55,6 +58,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (patch.name !== undefined) entries.push(['name', patch.name]);
     if (patch.dailyReminder !== undefined) entries.push(['dailyReminder', String(patch.dailyReminder)]);
     if (patch.onboardingDone !== undefined) entries.push(['onboardingDone', String(patch.onboardingDone)]);
+    if (patch.profile_avatar !== undefined) entries.push(['profile_avatar', patch.profile_avatar]);
     for (const [k, v] of entries) await db.settings.put({ key: k, value: v });
   }, []);
 

@@ -9,11 +9,77 @@ import PageHeader from '../components/PageHeader';
 export default function Settings() {
   const { settings, update } = useSettings();
   const [name, setName] = useState(settings.name);
+  const [profileAvatar, setProfileAvatar] = useState(settings.profile_avatar || '');
   const wallets = useLiveQuery(() => listWallets(true), []);
+
+  // Handle avatar upload
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Only allow images
+    if (!file.type.startsWith('image/')) {
+      alert('Pilih file gambar');
+      return;
+    }
+    // Read as data URL
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const dataUrl = e.target.result;
+      // Set immediately
+      setProfileAvatar(dataUrl);
+      update({ profile_avatar: dataUrl });
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="screen">
       <PageHeader title="Pengaturan" />
+
+      {/* Profile avatar section */}
+      <div className="card" style={{ padding: 14, marginTop: 12, textAlign: 'center' }}>
+        <div>
+          {profileAvatar ? (
+            <img
+              src={profileAvatar}
+              alt="Avatar"
+              style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                background: '#E8E4DC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#6B6358',
+                fontWeight: 500,
+                margin: 'auto',
+              }}>
+              {settings.name?.[0]?.toUpperCase() || 'U'}
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            style={{ display: 'none' }}
+            aria-label="Ubah foto profil"
+            ref={(el) => {
+              if (el) el.id = 'avatar-input';
+            }}
+          />
+          <button className="btn btn-ghost" style={{ marginTop: 8, width: '100%' }} onClick={() => document.getElementById('avatar-input')?.click()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h11l5 5v5a2 2 0 0 1-2 2z" />
+            </svg>
+            Ganti
+          </button>
+        </div>
+      </div>
 
       <div className="card" style={{ padding: 14, marginTop: 16 }}>
         <div className="txt-caption" style={{ marginBottom: 6 }}>Nama panggilan</div>

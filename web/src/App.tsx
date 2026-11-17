@@ -1,4 +1,5 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import { useAuth } from './store/auth';
 import Icon from './components/Icon';
 import ThemeApplier from './components/ThemeApplier';
 import ReminderScheduler from './components/ReminderScheduler';
@@ -19,6 +20,7 @@ import Appearance from './pages/Appearance';
 import Security from './pages/Security';
 import TransactionEditor from './pages/TransactionEditor';
 import Onboarding from './pages/Onboarding';
+import Login from './pages/Login';
 
 const tabs = [
   { to: '/', label: 'Beranda', icon: 'home' },
@@ -29,41 +31,54 @@ const tabs = [
 ];
 
 export default function App() {
+  const { ready, user } = useAuth();
+
+  if (!ready) return null;
+
   return (
     <>
       <ThemeApplier />
       <ReminderScheduler />
       <div className="app">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/budgets" element={<Budgets />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/more" element={<More />} />
-        <Route path="/wallets" element={<Wallets />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/recurring" element={<Recurring />} />
-        <Route path="/goals" element={<Goals />} />
-        <Route path="/debts" element={<Debts />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/settings/backup" element={<Backup />} />
-        <Route path="/settings/appearance" element={<Appearance />} />
-        <Route path="/settings/security" element={<Security />} />
-        <Route path="/transaction/new" element={<TransactionEditor mode="new" />} />
-        <Route path="/transaction/:id" element={<TransactionEditor mode="edit" />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-      </Routes>
+        <Routes>
+          <Route path="/auth" element={<Login />} />
+          {user ? (
+            <>
+              <Route path="/" element={<Home />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/budgets" element={<Budgets />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/more" element={<More />} />
+              <Route path="/wallets" element={<Wallets />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/recurring" element={<Recurring />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/debts" element={<Debts />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/backup" element={<Backup />} />
+              <Route path="/settings/appearance" element={<Appearance />} />
+              <Route path="/settings/security" element={<Security />} />
+              <Route path="/transaction/new" element={<TransactionEditor mode="new" />} />
+              <Route path="/transaction/:id" element={<TransactionEditor mode="edit" />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+            </>
+          ) : (
+            <Route path="*" element={<Navigate to="/auth" />} />
+          )}
+        </Routes>
 
-      <nav className="bottom-nav" aria-label="Navigasi utama">
-        {tabs.map((t) => (
-          <NavLink key={t.to} to={t.to} end={t.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>
-            <Icon name={t.icon} size={22} />
-            <span>{t.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </div>
+        {user && (
+          <nav className="bottom-nav" aria-label="Navigasi utama">
+            {tabs.map((t) => (
+              <NavLink key={t.to} to={t.to} end={t.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>
+                <Icon name={t.icon} size={22} />
+                <span>{t.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
+      </div>
     </>
   );
 }

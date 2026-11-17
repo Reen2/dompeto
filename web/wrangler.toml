@@ -1,0 +1,8 @@
+name = "dompet"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+DATABASE_URL = "postgresql://neondb_owner:npg_NBpSj5XwzOv8@ep-jolly-dawn-ao0qpbri-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require"
+JWT_SECRET = "dompet-prod-secret-9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c"
