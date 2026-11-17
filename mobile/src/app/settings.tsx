@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Alert, Pressable, Switch, View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { Alert, Image, Pressable, Switch, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as DocumentPicker from 'expo-document-picker';
+import { File, Paths } from 'expo-file-system';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 
@@ -19,6 +21,7 @@ import {
   Txt,
 } from '@/components/ui';
 import { resetDatabase } from '@/db';
+import { readSettings, writeSetting } from '@/db/queries';
 import { useTheme } from '@/hooks/use-theme';
 import { cancelDailyReminder, scheduleDailyReminder } from '@/lib/notifications';
 import { clearPin, useSettings } from '@/store/settings';
@@ -36,9 +39,73 @@ export default function SettingsScreen() {
   const [draftName, setDraftName] = useState(settings.name);
   const [resetOpen, setResetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageLoading, setProfileImageLoading] = useState(false);
 
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const initials = (settings.name || 'D').trim().slice(0, 1).toUpperCase();
+
+  // Load the saved profile image once on mount (stored as a file URI).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const raw = await readSettings();
+      const uri = raw.profile_image;
+      if (alive && uri) {
+        setProfileImage(uri);
+      }
+    })().catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function pickProfileImage() {
+    try {
+      setProfileImageLoading(true);
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['image/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (picked.canceled || !picked.assets?.length) return;
+
+      const asset = picked.assets[0];
+      const src = new File(asset.uri);
+      const dest = new File(Paths.document, `avatar-${Date.now()}${src.extension ? src.extension : '.jpg'}`);
+      if (dest.exists) dest.delete();
+      dest.create({ intermediates: true, overwrite: true });
+      await dest.write(await src.bytes());
+
+      // Drop the previous avatar so the cache doesn't grow on every change.
+      if (profileImage && profileImage !== dest.uri) {
+        try {
+          new File(profileImage).delete();
+        } catch {
+          /* ignore */
+        }
+      }
+
+      setProfileImage(dest.uri);
+      await writeSetting('profile_image', dest.uri);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert('Gagal memilih foto', 'Coba pilih foto lain.');
+    } finally {
+      setProfileImageLoading(false);
+    }
+  }
+
+  async function removeProfileImage() {
+    try {
+      if (profileImage) new File(profileImage).delete();
+    } catch {
+      /* ignore */
+    }
+    setProfileImage(null);
+    await writeSetting('profile_image', '');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
 
   async function toggleReminder(next: boolean) {
     if (!next) {
@@ -83,17 +150,30 @@ export default function SettingsScreen() {
       <Screen bottomInset={40}>
         <Card>
           <Row gap={14}>
-            <View
-              style={{
-                width: 54,
-                height: 54,
-                borderRadius: 27,
-                backgroundColor: c.accentSoft,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Txt style={{ fontSize: 22, fontWeight: '700', color: c.accent }}>{initials}</Txt>
-            </View>
+            <Pressable
+              onPress={() => {
+                Haptics.selectionAsync();
+                void pickProfileImage();
+              }}
+              hitSlop={8}
+              accessibilityLabel="Ganti foto profil">
+              <View
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 27,
+                  overflow: 'hidden',
+                  backgroundColor: c.accentSoft,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={{ width: 54, height: 54 }} resizeMode="cover" />
+                ) : (
+                  <Txt style={{ fontSize: 22, fontWeight: '700', color: c.accent }}>{initials}</Txt>
+                )}
+              </View>
+            </Pressable>
             <View style={{ flex: 1, gap: 3 }}>
               <Txt variant="h2">{settings.name || 'Tanpa nama'}</Txt>
               <Row gap={6}>
@@ -113,6 +193,53 @@ export default function SettingsScreen() {
             </Pressable>
           </Row>
         </Card>
+
+        {profileImage ? (
+          <Card style={{ marginTop: 12 }}>
+            <Row between>
+              <Row gap={6}>
+                <Icon sf="photo.fill" size={16} color={c.textMuted} />
+                <Txt variant="caption" color={c.textMuted}>
+                  Foto profil
+                </Txt>
+              </Row>
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  void removeProfileImage();
+                }}
+                hitSlop={8}
+                accessibilityLabel="Hapus foto profil">
+                <Txt variant="caption" color={c.expense} weight="600">
+                  Hapus
+                </Txt>
+              </Pressable>
+            </Row>
+          </Card>
+        ) : (
+          <Card style={{ marginTop: 12 }}>
+            <Row between>
+              <Row gap={6}>
+                <Icon sf="photo.fill" size={16} color={c.textMuted} />
+                <Txt variant="caption" color={c.textMuted}>
+                  Tambahkan foto profil dari galeri
+                </Txt>
+              </Row>
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  void pickProfileImage();
+                }}
+                disabled={profileImageLoading}
+                hitSlop={8}
+                accessibilityLabel="Tambahkan foto profil">
+                <Txt variant="caption" color={c.accent} weight="600">
+                  {profileImageLoading ? 'Memilih…' : 'Pilih'}
+                </Txt>
+              </Pressable>
+            </Row>
+          </Card>
+        )}
 
         <SectionHeader title="Preferensi" />
         <Card padded={false} style={{ paddingHorizontal: 16 }}>
